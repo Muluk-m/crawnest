@@ -141,9 +141,36 @@ fn start_gateway(app: AppHandle, process: State<'_, GatewayProcess>) -> Result<(
     }
     let _ = app.emit("gateway-status", GatewayStatus::Starting);
 
-    let node_path = get_node_binary_path(&app)?;
-    let (runtime_dir, scripts_dir, _templates_dir) = get_resource_paths(&app)?;
-    let user_dir = get_user_data_dir(&app)?;
+    let node_path = match get_node_binary_path(&app) {
+        Ok(p) => p,
+        Err(e) => {
+            let mut state = process.state.lock().unwrap();
+            state.status = GatewayStatus::Failed;
+            state.last_error = Some(e.clone());
+            let _ = app.emit("gateway-status", GatewayStatus::Failed);
+            return Err(e);
+        }
+    };
+    let (runtime_dir, scripts_dir, _templates_dir) = match get_resource_paths(&app) {
+        Ok(p) => p,
+        Err(e) => {
+            let mut state = process.state.lock().unwrap();
+            state.status = GatewayStatus::Failed;
+            state.last_error = Some(e.clone());
+            let _ = app.emit("gateway-status", GatewayStatus::Failed);
+            return Err(e);
+        }
+    };
+    let user_dir = match get_user_data_dir(&app) {
+        Ok(p) => p,
+        Err(e) => {
+            let mut state = process.state.lock().unwrap();
+            state.status = GatewayStatus::Failed;
+            state.last_error = Some(e.clone());
+            let _ = app.emit("gateway-status", GatewayStatus::Failed);
+            return Err(e);
+        }
+    };
 
     let start_script = scripts_dir.join("start-openclaw.cjs");
     if !start_script.exists() {
