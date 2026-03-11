@@ -1,0 +1,10 @@
+{
+  "name": "openclaw-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bundled OpenClaw runtime for desktop app",
+  "dependencies": {
+    "@larksuiteoapi/feishu-openclaw-plugin": "^2026.3.8",
+    "openclaw": "^2026.3.8"
+  }
+}

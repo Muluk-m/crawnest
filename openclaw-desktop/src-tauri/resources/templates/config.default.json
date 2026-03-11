@@ -1,0 +1,21 @@
+{
+  "app": {
+    "autoStartGateway": false,
+    "autoStartOnBoot": false,
+    "setupCompleted": false
+  },
+  "gateway": {
+    "port": 3000,
+    "host": "127.0.0.1"
+  },
+  "provider": {
+    "type": "",
+    "apiKey": "",
+    "baseUrl": ""
+  },
+  "feishu": {
+    "enabled": false,
+    "appId": "",
+    "appSecret": ""
+  }
+}
