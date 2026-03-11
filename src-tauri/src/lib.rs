@@ -578,6 +578,107 @@ fn get_diagnostics_info(app: AppHandle) -> Result<serde_json::Value, String> {
     }))
 }
 
+// --- CLI Installation ---
+
+const CLI_PATH: &str = "/usr/local/bin/openclaw";
+
+#[tauri::command]
+fn check_cli_status() -> Result<serde_json::Value, String> {
+    let path = std::path::Path::new(CLI_PATH);
+    Ok(serde_json::json!({
+        "installed": path.exists(),
+        "path": CLI_PATH,
+    }))
+}
+
+#[tauri::command]
+fn install_cli(app: AppHandle) -> Result<(), String> {
+    let node_path = get_node_binary_path(&app)?;
+    let (runtime_dir, _, _) = get_resource_paths(&app)?;
+
+    let openclaw_bin = runtime_dir
+        .join("node_modules")
+        .join("openclaw")
+        .join("openclaw.mjs");
+
+    let script = format!(
+        r#"#!/bin/bash
+# Installed by OpenClaw Desktop
+NODE="{node}"
+OPENCLAW_BIN="{bin}"
+exec "$NODE" "$OPENCLAW_BIN" "$@"
+"#,
+        node = node_path.to_string_lossy(),
+        bin = openclaw_bin.to_string_lossy(),
+    );
+
+    // Try direct write first
+    match std::fs::write(CLI_PATH, &script) {
+        Ok(()) => {
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                let _ = std::fs::set_permissions(CLI_PATH, std::fs::Permissions::from_mode(0o755));
+            }
+            return Ok(());
+        }
+        Err(_) => {
+            // Permission denied – try with osascript on macOS
+            #[cfg(target_os = "macos")]
+            {
+                let escaped_script = script.replace('\'', "'\\''");
+                let cmd = format!(
+                    "do shell script \"echo '{}' > {} && chmod 755 {}\" with administrator privileges",
+                    escaped_script, CLI_PATH, CLI_PATH
+                );
+                let status = Command::new("osascript")
+                    .arg("-e")
+                    .arg(&cmd)
+                    .status()
+                    .map_err(|e| format!("Failed to run osascript: {}", e))?;
+                if status.success() {
+                    return Ok(());
+                }
+                return Err("Failed to install CLI: permission denied".to_string());
+            }
+            #[cfg(not(target_os = "macos"))]
+            return Err("Failed to install CLI: permission denied".to_string());
+        }
+    }
+}
+
+#[tauri::command]
+fn uninstall_cli() -> Result<(), String> {
+    let path = std::path::Path::new(CLI_PATH);
+    if !path.exists() {
+        return Ok(());
+    }
+
+    match std::fs::remove_file(CLI_PATH) {
+        Ok(()) => Ok(()),
+        Err(_) => {
+            #[cfg(target_os = "macos")]
+            {
+                let cmd = format!(
+                    "do shell script \"rm -f {}\" with administrator privileges",
+                    CLI_PATH
+                );
+                let status = Command::new("osascript")
+                    .arg("-e")
+                    .arg(&cmd)
+                    .status()
+                    .map_err(|e| format!("Failed to run osascript: {}", e))?;
+                if status.success() {
+                    return Ok(());
+                }
+                return Err("Failed to uninstall CLI: permission denied".to_string());
+            }
+            #[cfg(not(target_os = "macos"))]
+            return Err("Failed to uninstall CLI: permission denied".to_string());
+        }
+    }
+}
+
 // --- Autostart Management ---
 
 #[tauri::command]
@@ -726,6 +827,9 @@ pub fn run() {
             enable_autostart,
             disable_autostart,
             is_autostart_enabled,
+            check_cli_status,
+            install_cli,
+            uninstall_cli,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -28,6 +28,8 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [paths, setPaths] = useState({ userDataDir: "", runtimeDir: "", nodePath: "" });
+  const [cliInstalled, setCliInstalled] = useState(false);
+  const [cliLoading, setCliLoading] = useState(false);
   const { t, i18n } = useTranslation();
 
   useEffect(() => { if (config) setForm({ ...config }); }, [config]);
@@ -35,6 +37,7 @@ export default function SettingsPage() {
     invoke<Record<string, unknown>>("get_diagnostics_info").then((info) => {
       setPaths({ userDataDir: (info.userDataDir as string) || "", runtimeDir: (info.runtimeDir as string) || "", nodePath: (info.nodePath as string) || "" });
     });
+    invoke<{ installed: boolean }>("check_cli_status").then((res) => setCliInstalled(res.installed));
   }, []);
 
   if (loading || !form) return <div className="p-6 text-text-muted">{t('common.loading')}</div>;
@@ -91,6 +94,45 @@ export default function SettingsPage() {
             <option value="zh">zh-CN</option>
             <option value="en">English</option>
           </select>
+        </div>
+      </Section>
+
+      <Section title={t('settings.cli')}>
+        <p className="text-xs text-text-secondary mb-2">{t('settings.cliDescription')}</p>
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className={`inline-block w-2 h-2 rounded-full ${cliInstalled ? 'bg-success' : 'bg-text-muted'}`} />
+              <span className="text-sm text-text-secondary">{cliInstalled ? t('settings.cliInstalled') : t('settings.cliNotInstalled')}</span>
+            </div>
+            <div className="text-xs text-text-muted"><span className="font-medium">{t('settings.cliPath')}:</span> <code className="bg-bg px-1.5 py-0.5 rounded text-[11px]">/usr/local/bin/openclaw</code></div>
+          </div>
+          <button
+            onClick={async () => {
+              setCliLoading(true);
+              try {
+                if (cliInstalled) {
+                  await invoke("uninstall_cli");
+                } else {
+                  await invoke("install_cli");
+                }
+                const res = await invoke<{ installed: boolean }>("check_cli_status");
+                setCliInstalled(res.installed);
+              } catch (e) {
+                console.error("CLI operation failed:", e);
+              } finally {
+                setCliLoading(false);
+              }
+            }}
+            disabled={cliLoading}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${
+              cliInstalled
+                ? 'bg-surface-hover hover:bg-red-500/10 text-red-500 border border-red-500/20'
+                : 'bg-accent hover:bg-accent-hover text-white'
+            }`}
+          >
+            {cliLoading ? t('common.loading') : cliInstalled ? t('settings.uninstallCli') : t('settings.installCli')}
+          </button>
         </div>
       </Section>
 
