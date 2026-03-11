@@ -1,17 +1,18 @@
 import { NavLink } from "react-router-dom";
 import { useGateway } from "../../hooks/useGateway";
+import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 
 interface NavItem {
   to: string;
-  label: string;
+  labelKey: string;
   icon: ReactNode;
 }
 
 const navItems: NavItem[] = [
   {
     to: "/",
-    label: "Dashboard",
+    labelKey: "sidebar.dashboard",
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -21,7 +22,7 @@ const navItems: NavItem[] = [
   },
   {
     to: "/workspace",
-    label: "Workspace",
+    labelKey: "sidebar.workspace",
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
@@ -32,7 +33,7 @@ const navItems: NavItem[] = [
   },
   {
     to: "/skills",
-    label: "Skills",
+    labelKey: "sidebar.skills",
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
@@ -41,7 +42,7 @@ const navItems: NavItem[] = [
   },
   {
     to: "/automation",
-    label: "Automation",
+    labelKey: "sidebar.automation",
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="23 4 23 10 17 10" />
@@ -52,7 +53,7 @@ const navItems: NavItem[] = [
   },
   {
     to: "/settings",
-    label: "Settings",
+    labelKey: "sidebar.settings",
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="3" />
@@ -62,7 +63,7 @@ const navItems: NavItem[] = [
   },
   {
     to: "/logs",
-    label: "Logs",
+    labelKey: "sidebar.logs",
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -75,7 +76,7 @@ const navItems: NavItem[] = [
   },
   {
     to: "/diagnostics",
-    label: "Diagnostics",
+    labelKey: "sidebar.diagnostics",
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="11" cy="11" r="8" />
@@ -85,7 +86,7 @@ const navItems: NavItem[] = [
   },
   {
     to: "/updates",
-    label: "Updates",
+    labelKey: "sidebar.updates",
     icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -103,17 +104,18 @@ const statusColorMap: Record<string, string> = {
   failed: "bg-red-500",
 };
 
-const statusLabelMap: Record<string, string> = {
-  running: "Gateway running",
-  starting: "Gateway starting",
-  stopped: "Gateway stopped",
-  failed: "Gateway failed",
+const statusLabelKeyMap: Record<string, string> = {
+  running: "sidebar.gatewayRunning",
+  starting: "sidebar.gatewayStarting",
+  stopped: "sidebar.gatewayStopped",
+  failed: "sidebar.gatewayFailed",
 };
 
 export default function Sidebar() {
   const { state } = useGateway();
+  const { t } = useTranslation();
   const statusColor = statusColorMap[state.status] ?? "bg-gray-500";
-  const statusLabel = statusLabelMap[state.status] ?? state.status;
+  const statusLabelKey = statusLabelKeyMap[state.status] ?? state.status;
 
   return (
     <aside className="w-56 bg-gray-900 text-gray-300 flex flex-col min-h-screen">
@@ -135,14 +137,14 @@ export default function Sidebar() {
             }
           >
             {item.icon}
-            <span>{item.label}</span>
+            <span>{t(item.labelKey)}</span>
           </NavLink>
         ))}
       </nav>
       <div className="p-4 border-t border-gray-700">
         <div className="flex items-center gap-2 text-xs text-gray-400">
           <span className={`w-2 h-2 rounded-full shrink-0 ${statusColor}`} />
-          <span>{statusLabel}</span>
+          <span>{t(statusLabelKey)}</span>
         </div>
       </div>
     </aside>

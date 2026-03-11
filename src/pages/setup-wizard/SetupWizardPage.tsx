@@ -1,15 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { AppConfig, DiagnosticsInfo } from "../../lib/types";
 
-const STEPS = ["Welcome", "Environment", "Provider", "Feishu"] as const;
+const STEP_KEYS = ["setup.stepWelcome", "setup.stepEnvironment", "setup.stepProvider", "setup.stepFeishu"] as const;
 
-function StepIndicator({ current }: { current: number }) {
+function StepIndicator({ current, t }: { current: number; t: (key: string) => string }) {
+  const steps = [t('setup.stepWelcome'), t('setup.stepEnvironment'), t('setup.stepProvider'), t('setup.stepFeishu')];
   return (
     <div className="flex items-center justify-center gap-2 mb-8">
-      {STEPS.map((label, i) => (
-        <div key={label} className="flex items-center gap-2">
+      {steps.map((label, i) => (
+        <div key={i} className="flex items-center gap-2">
           <div
             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
               i < current
@@ -28,7 +30,7 @@ function StepIndicator({ current }: { current: number }) {
           >
             {label}
           </span>
-          {i < STEPS.length - 1 && (
+          {i < steps.length - 1 && (
             <div className="w-8 h-px bg-gray-300 mx-1" />
           )}
         </div>
@@ -38,16 +40,14 @@ function StepIndicator({ current }: { current: number }) {
 }
 
 // Step 1: Welcome
-function WelcomeStep() {
+function WelcomeStep({ t }: { t: (key: string) => string }) {
   return (
     <div className="text-center">
-      <h2 className="text-2xl font-bold mb-3">Welcome to OpenClaw Desktop</h2>
+      <h2 className="text-2xl font-bold mb-3">{t('setup.welcomeTitle')}</h2>
       <p className="text-gray-500 mb-6 leading-relaxed">
-        This wizard will guide you through the initial setup. We will check your
-        runtime environment, configure the gateway provider, and optionally set
-        up Feishu integration.
+        {t('setup.welcomeDesc')}
       </p>
-      <p className="text-sm text-gray-400">Click Next to get started.</p>
+      <p className="text-sm text-gray-400">{t('setup.clickNext')}</p>
     </div>
   );
 }
@@ -58,17 +58,19 @@ function EnvironmentStep({
   loading,
   error,
   onRetry,
+  t,
 }: {
   diagnostics: DiagnosticsInfo | null;
   loading: boolean;
   error: string | null;
   onRetry: () => void;
+  t: (key: string) => string;
 }) {
   if (loading) {
     return (
       <div className="text-center py-8">
         <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-gray-500">Checking runtime environment...</p>
+        <p className="text-gray-500">{t('setup.checkingEnv')}</p>
       </div>
     );
   }
@@ -81,7 +83,7 @@ function EnvironmentStep({
           onClick={onRetry}
           className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
         >
-          Retry
+          {t('setup.retry')}
         </button>
       </div>
     );
@@ -107,7 +109,7 @@ function EnvironmentStep({
 
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-4">Runtime Environment</h2>
+      <h2 className="text-lg font-semibold mb-4">{t('setup.runtimeEnv')}</h2>
       <div className="space-y-3 mb-4">
         {items.map((item) => (
           <div
@@ -125,7 +127,7 @@ function EnvironmentStep({
             <span
               className={`text-sm font-medium ${item.ok ? "text-green-600" : "text-red-500"}`}
             >
-              {item.ok ? "OK" : "Missing"}
+              {item.ok ? t('setup.ok') : t('setup.missing')}
             </span>
           </div>
         ))}
@@ -133,7 +135,7 @@ function EnvironmentStep({
 
       {diagnostics.proxyVarsDetected.length > 0 && (
         <div className="p-3 rounded border border-yellow-200 bg-yellow-50 text-sm">
-          <span className="font-medium text-yellow-700">Proxy detected: </span>
+          <span className="font-medium text-yellow-700">{t('setup.proxyDetected')}</span>
           <span className="text-yellow-600">
             {diagnostics.proxyVarsDetected.join(", ")}
           </span>
@@ -141,8 +143,8 @@ function EnvironmentStep({
       )}
 
       <div className="mt-4 text-xs text-gray-400 space-y-1">
-        <p>Data dir: {diagnostics.userDataDir}</p>
-        <p>Runtime dir: {diagnostics.runtimeDir}</p>
+        <p>{t('setup.dataDir')}: {diagnostics.userDataDir}</p>
+        <p>{t('setup.runtimeDir')}: {diagnostics.runtimeDir}</p>
       </div>
     </div>
   );
@@ -152,9 +154,11 @@ function EnvironmentStep({
 function ProviderStep({
   config,
   onChange,
+  t,
 }: {
   config: AppConfig;
   onChange: (config: AppConfig) => void;
+  t: (key: string) => string;
 }) {
   const updateGateway = (field: keyof AppConfig["gateway"], value: string | number) => {
     onChange({ ...config, gateway: { ...config.gateway, [field]: value } });
@@ -165,15 +169,15 @@ function ProviderStep({
 
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-4">Gateway & Provider</h2>
+      <h2 className="text-lg font-semibold mb-4">{t('setup.gatewayProvider')}</h2>
 
       <fieldset className="mb-6">
         <legend className="text-sm font-medium text-gray-700 mb-2">
-          Gateway
+          {t('setup.gateway')}
         </legend>
         <div className="grid grid-cols-2 gap-4">
           <label className="block">
-            <span className="text-xs text-gray-500">Host</span>
+            <span className="text-xs text-gray-500">{t('setup.host')}</span>
             <input
               type="text"
               value={config.gateway.host}
@@ -182,7 +186,7 @@ function ProviderStep({
             />
           </label>
           <label className="block">
-            <span className="text-xs text-gray-500">Port</span>
+            <span className="text-xs text-gray-500">{t('setup.port')}</span>
             <input
               type="number"
               value={config.gateway.port}
@@ -197,11 +201,11 @@ function ProviderStep({
 
       <fieldset>
         <legend className="text-sm font-medium text-gray-700 mb-2">
-          Provider
+          {t('setup.provider')}
         </legend>
         <div className="space-y-3">
           <label className="block">
-            <span className="text-xs text-gray-500">Type</span>
+            <span className="text-xs text-gray-500">{t('setup.type')}</span>
             <select
               value={config.provider.type}
               onChange={(e) => updateProvider("type", e.target.value)}
@@ -214,7 +218,7 @@ function ProviderStep({
             </select>
           </label>
           <label className="block">
-            <span className="text-xs text-gray-500">API Key</span>
+            <span className="text-xs text-gray-500">{t('setup.apiKeyLabel')}</span>
             <input
               type="password"
               value={config.provider.apiKey}
@@ -224,7 +228,7 @@ function ProviderStep({
             />
           </label>
           <label className="block">
-            <span className="text-xs text-gray-500">Base URL</span>
+            <span className="text-xs text-gray-500">{t('setup.baseUrlLabel')}</span>
             <input
               type="text"
               value={config.provider.baseUrl}
@@ -243,9 +247,11 @@ function ProviderStep({
 function FeishuStep({
   config,
   onChange,
+  t,
 }: {
   config: AppConfig;
   onChange: (config: AppConfig) => void;
+  t: (key: string) => string;
 }) {
   const updateFeishu = (field: keyof AppConfig["feishu"], value: string | boolean) => {
     onChange({ ...config, feishu: { ...config.feishu, [field]: value } });
@@ -253,10 +259,9 @@ function FeishuStep({
 
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-4">Feishu Integration</h2>
+      <h2 className="text-lg font-semibold mb-4">{t('setup.feishuTitle')}</h2>
       <p className="text-sm text-gray-500 mb-4">
-        Optional. Connect a Feishu (Lark) app for notifications and automation.
-        You can skip this and configure it later in Settings.
+        {t('setup.feishuDesc')}
       </p>
 
       <label className="flex items-center gap-2 mb-4 cursor-pointer">
@@ -267,14 +272,14 @@ function FeishuStep({
           className="rounded border-gray-300"
         />
         <span className="text-sm font-medium text-gray-700">
-          Enable Feishu integration
+          {t('setup.enableFeishuIntegration')}
         </span>
       </label>
 
       {config.feishu.enabled && (
         <div className="space-y-3">
           <label className="block">
-            <span className="text-xs text-gray-500">App ID</span>
+            <span className="text-xs text-gray-500">{t('setup.appIdLabel')}</span>
             <input
               type="text"
               value={config.feishu.appId}
@@ -284,7 +289,7 @@ function FeishuStep({
             />
           </label>
           <label className="block">
-            <span className="text-xs text-gray-500">App Secret</span>
+            <span className="text-xs text-gray-500">{t('setup.appSecretLabel')}</span>
             <input
               type="password"
               value={config.feishu.appSecret}
@@ -322,6 +327,7 @@ const DEFAULT_CONFIG: AppConfig = {
 
 export default function SetupWizardPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [config, setConfig] = useState<AppConfig>(DEFAULT_CONFIG);
   const [diagnostics, setDiagnostics] = useState<DiagnosticsInfo | null>(null);
@@ -364,25 +370,26 @@ export default function SetupWizardPage() {
     }
   };
 
-  const isLastStep = step === STEPS.length - 1;
+  const isLastStep = step === STEP_KEYS.length - 1;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="max-w-xl w-full bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-        <StepIndicator current={step} />
+        <StepIndicator current={step} t={t} />
 
         <div className="min-h-[280px]">
-          {step === 0 && <WelcomeStep />}
+          {step === 0 && <WelcomeStep t={t} />}
           {step === 1 && (
             <EnvironmentStep
               diagnostics={diagnostics}
               loading={diagLoading}
               error={diagError}
               onRetry={fetchDiagnostics}
+              t={t}
             />
           )}
-          {step === 2 && <ProviderStep config={config} onChange={setConfig} />}
-          {step === 3 && <FeishuStep config={config} onChange={setConfig} />}
+          {step === 2 && <ProviderStep config={config} onChange={setConfig} t={t} />}
+          {step === 3 && <FeishuStep config={config} onChange={setConfig} t={t} />}
         </div>
 
         <div className="flex justify-between mt-6 pt-4 border-t border-gray-100">
@@ -391,7 +398,7 @@ export default function SetupWizardPage() {
             disabled={step === 0}
             className="px-4 py-2 text-sm rounded border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Back
+            {t('setup.back')}
           </button>
 
           {isLastStep ? (
@@ -400,14 +407,14 @@ export default function SetupWizardPage() {
               disabled={saving}
               className="px-5 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
             >
-              {saving ? "Saving..." : "Finish Setup"}
+              {saving ? t('setup.saving') : t('setup.finishSetup')}
             </button>
           ) : (
             <button
               onClick={() => setStep((s) => s + 1)}
               className="px-5 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
             >
-              Next
+              {t('setup.next')}
             </button>
           )}
         </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useTranslation } from "react-i18next";
 
 export default function UpdatesPage() {
   const [versions, setVersions] = useState({
@@ -7,6 +8,7 @@ export default function UpdatesPage() {
     node: "",
     openclaw: "",
   });
+  const { t } = useTranslation();
 
   useEffect(() => {
     invoke<Record<string, unknown>>("get_diagnostics_info").then((info) => {
@@ -19,68 +21,68 @@ export default function UpdatesPage() {
   }, []);
 
   const handleRepair = async () => {
-    if (!confirm("Re-initialize runtime from app resources?")) return;
+    if (!confirm(t('updates.reinitializeHint'))) return;
     try {
       await invoke("init_user_data_dir");
       await invoke("copy_plugin_to_extensions");
-      alert("Runtime repaired successfully.");
+      alert(t('updates.reinitialize'));
     } catch (e) {
-      alert(`Repair failed: ${e}`);
+      alert(`${t('updates.repairRuntime')}: ${e}`);
     }
   };
 
   return (
     <div className="p-6 max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">Updates</h1>
+      <h1 className="text-2xl font-bold mb-6">{t('updates.title')}</h1>
 
       <section className="mb-6">
-        <h2 className="text-lg font-semibold mb-3 text-gray-700">Version Information</h2>
+        <h2 className="text-lg font-semibold mb-3 text-gray-700">{t('updates.versionInfo')}</h2>
         <div className="bg-white rounded-lg border p-4 space-y-3">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Application</span>
+            <span className="text-gray-600">{t('updates.application')}</span>
             <span className="font-mono">{versions.app}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Node.js Runtime</span>
+            <span className="text-gray-600">{t('updates.nodeRuntime')}</span>
             <span className="font-mono">{versions.node}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">OpenClaw</span>
+            <span className="text-gray-600">{t('updates.openclaw')}</span>
             <span className="font-mono">{versions.openclaw}</span>
           </div>
         </div>
       </section>
 
       <section className="mb-6">
-        <h2 className="text-lg font-semibold mb-3 text-gray-700">Check for Updates</h2>
+        <h2 className="text-lg font-semibold mb-3 text-gray-700">{t('updates.checkForUpdates')}</h2>
         <div className="bg-white rounded-lg border p-4">
-          <p className="text-sm text-gray-500 mb-3">Automatic update checking will be available in a future release.</p>
+          <p className="text-sm text-gray-500 mb-3">{t('updates.autoUpdateHint')}</p>
           <button disabled className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md opacity-50 cursor-not-allowed">
-            Check for Updates
+            {t('updates.checkButton')}
           </button>
         </div>
       </section>
 
       <section className="mb-6">
-        <h2 className="text-lg font-semibold mb-3 text-gray-700">Manual Update</h2>
+        <h2 className="text-lg font-semibold mb-3 text-gray-700">{t('updates.manualUpdate')}</h2>
         <div className="bg-white rounded-lg border p-4 text-sm text-gray-600 space-y-2">
-          <p>To manually update the runtime:</p>
+          <p>{t('updates.manualUpdateDesc')}</p>
           <ol className="list-decimal list-inside space-y-1 text-gray-500">
-            <li>Download the latest OpenClaw Desktop release</li>
-            <li>Stop the gateway if running</li>
-            <li>Install the new version (replaces the old one)</li>
-            <li>Re-launch and verify in Diagnostics</li>
+            <li>{t('updates.manualStep1')}</li>
+            <li>{t('updates.manualStep2')}</li>
+            <li>{t('updates.manualStep3')}</li>
+            <li>{t('updates.manualStep4')}</li>
           </ol>
         </div>
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold mb-3 text-gray-700">Repair Runtime</h2>
+        <h2 className="text-lg font-semibold mb-3 text-gray-700">{t('updates.repairRuntime')}</h2>
         <div className="bg-white rounded-lg border p-4">
           <button onClick={handleRepair} className="px-3 py-1.5 text-sm border border-orange-300 text-orange-600 rounded-md hover:bg-orange-50">
-            Re-initialize Runtime
+            {t('updates.reinitialize')}
           </button>
-          <p className="text-xs text-gray-400 mt-2">Copies bundled runtime resources to user directory. Use if runtime is corrupted.</p>
+          <p className="text-xs text-gray-400 mt-2">{t('updates.reinitializeHint')}</p>
         </div>
       </section>
     </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { DiagnosticsInfo } from "../../lib/types";
 import { useGateway } from "../../hooks/useGateway";
+import { useTranslation } from "react-i18next";
 
 function CheckItem({ label, ok, detail }: { label: string; ok: boolean; detail?: string }) {
   return (
@@ -19,6 +20,7 @@ export default function DiagnosticsPage() {
   const [info, setInfo] = useState<DiagnosticsInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const { state } = useGateway();
+  const { t } = useTranslation();
 
   const loadDiagnostics = async () => {
     setLoading(true);
@@ -37,7 +39,7 @@ export default function DiagnosticsPage() {
   }, []);
 
   const handleReset = async () => {
-    if (!confirm("Reset configuration to defaults? This will not delete logs or extensions.")) return;
+    if (!confirm(t('diagnostics.resetConfigHint'))) return;
     try {
       await invoke("init_user_data_dir");
       loadDiagnostics();
@@ -46,28 +48,28 @@ export default function DiagnosticsPage() {
     }
   };
 
-  if (loading || !info) return <div className="p-6 text-gray-500">Running diagnostics...</div>;
+  if (loading || !info) return <div className="p-6 text-gray-500">{t('diagnostics.runningDiagnostics')}</div>;
 
   return (
     <div className="p-6 max-w-2xl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Diagnostics</h1>
+        <h1 className="text-2xl font-bold">{t('diagnostics.title')}</h1>
         <button onClick={loadDiagnostics} className="px-3 py-1.5 text-sm border rounded-md hover:bg-gray-50">
-          Re-check
+          {t('diagnostics.recheck')}
         </button>
       </div>
 
       <section className="mb-6">
-        <h2 className="text-lg font-semibold mb-3 text-gray-700">Runtime</h2>
+        <h2 className="text-lg font-semibold mb-3 text-gray-700">{t('diagnostics.runtime')}</h2>
         <div className="bg-white rounded-lg border p-4">
-          <CheckItem label="Node.js Runtime" ok={info.nodeAvailable} detail={info.nodePath} />
-          <CheckItem label="OpenClaw Package" ok={info.openclawAvailable} />
-          <CheckItem label="Feishu Plugin" ok={info.pluginAvailable} />
+          <CheckItem label={t('diagnostics.nodeRuntime')} ok={info.nodeAvailable} detail={info.nodePath} />
+          <CheckItem label={t('diagnostics.openclawPackage')} ok={info.openclawAvailable} />
+          <CheckItem label={t('diagnostics.feishuPlugin')} ok={info.pluginAvailable} />
         </div>
       </section>
 
       <section className="mb-6">
-        <h2 className="text-lg font-semibold mb-3 text-gray-700">Directories</h2>
+        <h2 className="text-lg font-semibold mb-3 text-gray-700">{t('diagnostics.directories')}</h2>
         <div className="bg-white rounded-lg border p-4">
           {Object.entries(info.configDirs).map(([dir, exists]) => (
             <CheckItem key={dir} label={`${dir}/`} ok={exists} detail={`${info.userDataDir}/${dir}`} />
@@ -76,13 +78,13 @@ export default function DiagnosticsPage() {
       </section>
 
       <section className="mb-6">
-        <h2 className="text-lg font-semibold mb-3 text-gray-700">Proxy Environment</h2>
+        <h2 className="text-lg font-semibold mb-3 text-gray-700">{t('diagnostics.proxyEnvironment')}</h2>
         <div className="bg-white rounded-lg border p-4">
           {info.proxyVarsDetected.length === 0 ? (
-            <CheckItem label="Proxy Variables" ok={true} detail="No proxy variables detected - clean environment" />
+            <CheckItem label={t('diagnostics.proxyEnvironment')} ok={true} detail={t('diagnostics.noProxy')} />
           ) : (
             info.proxyVarsDetected.map((v) => (
-              <CheckItem key={v} label="Proxy Detected" ok={false} detail={v} />
+              <CheckItem key={v} label={t('diagnostics.proxyDetected')} ok={false} detail={v} />
             ))
           )}
         </div>
@@ -90,7 +92,7 @@ export default function DiagnosticsPage() {
 
       {state.last_error && (
         <section className="mb-6">
-          <h2 className="text-lg font-semibold mb-3 text-gray-700">Last Error</h2>
+          <h2 className="text-lg font-semibold mb-3 text-gray-700">{t('diagnostics.lastError')}</h2>
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
             {state.last_error}
           </div>
@@ -98,12 +100,12 @@ export default function DiagnosticsPage() {
       )}
 
       <section>
-        <h2 className="text-lg font-semibold mb-3 text-gray-700">Repair</h2>
+        <h2 className="text-lg font-semibold mb-3 text-gray-700">{t('diagnostics.repair')}</h2>
         <div className="bg-white rounded-lg border p-4">
           <button onClick={handleReset} className="px-3 py-1.5 text-sm border border-red-300 text-red-600 rounded-md hover:bg-red-50">
-            Reset Configuration
+            {t('diagnostics.resetConfig')}
           </button>
-          <p className="text-xs text-gray-400 mt-2">Resets app-config.json to default values. Logs and extensions are preserved.</p>
+          <p className="text-xs text-gray-400 mt-2">{t('diagnostics.resetConfigHint')}</p>
         </div>
       </section>
     </div>
