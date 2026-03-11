@@ -61,10 +61,21 @@ fn get_node_binary_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
     #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     let node_name = "node";
 
-    // Sidecar binaries are in the resource dir root on bundled apps
+    // Sidecar binaries are in the resource dir root on bundled apps (with triple suffix)
     let node_path = resource_dir.join(node_name);
     if node_path.exists() {
         return Ok(node_path);
+    }
+
+    // Bundled apps may strip the triple suffix, leaving just "node" (or "node.exe" on Windows)
+    #[cfg(target_os = "windows")]
+    let plain_name = "node.exe";
+    #[cfg(not(target_os = "windows"))]
+    let plain_name = "node";
+
+    let plain_path = resource_dir.join(plain_name);
+    if plain_path.exists() {
+        return Ok(plain_path);
     }
 
     // Development fallback: check binaries directory
@@ -73,7 +84,7 @@ fn get_node_binary_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
         return Ok(dev_path);
     }
 
-    Err(format!("Node binary not found at {:?} or {:?}", node_path, dev_path))
+    Err(format!("Node binary not found at {:?}, {:?}, or {:?}", node_path, plain_path, dev_path))
 }
 
 fn get_resource_paths(
