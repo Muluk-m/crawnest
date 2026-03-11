@@ -2,47 +2,25 @@ import { useTranslation } from "react-i18next";
 
 export default function AutomationPage() {
   const { t } = useTranslation();
+  const headCls = "text-xs font-semibold text-text-muted uppercase tracking-wider mb-3";
+  const cardCls = "bg-surface-elevated rounded-xl border border-border p-4 text-sm text-text-muted";
 
   return (
-    <div className="p-6">
+    <div className="p-6 animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">{t('automation.title')}</h1>
-        <button disabled className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md opacity-50 cursor-not-allowed">
-          {t('automation.newTask')}
-        </button>
+        <h1 className="text-lg font-semibold text-text">{t('automation.title')}</h1>
+        <button disabled className="px-3 py-1.5 text-xs font-medium rounded-lg bg-accent text-white opacity-50 cursor-not-allowed">{t('automation.newTask')}</button>
       </div>
-
-      <div className="grid grid-cols-1 gap-6">
-        {/* Task List */}
-        <section>
-          <h2 className="text-lg font-semibold mb-3 text-gray-700">{t('automation.tasks')}</h2>
-          <div className="bg-white rounded-lg border p-8 text-center">
-            <div className="text-gray-400 mb-3">
-              <svg className="w-12 h-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </div>
-            <p className="text-sm text-gray-500 mb-1">{t('automation.noTasks')}</p>
-            <p className="text-xs text-gray-400">{t('automation.cronHint')}</p>
-          </div>
-        </section>
-
-        {/* Schedule Config Placeholder */}
-        <section>
-          <h2 className="text-lg font-semibold mb-3 text-gray-700">{t('automation.schedule')}</h2>
-          <div className="bg-white rounded-lg border p-4 text-sm text-gray-400">
-            {t('automation.scheduleFuture')}
-          </div>
-        </section>
-
-        {/* Execution History Placeholder */}
-        <section>
-          <h2 className="text-lg font-semibold mb-3 text-gray-700">{t('automation.executionHistory')}</h2>
-          <div className="bg-white rounded-lg border p-4 text-sm text-gray-400">
-            {t('automation.noHistory')}
-          </div>
-        </section>
+      <h2 className={headCls}>{t('automation.tasks')}</h2>
+      <div className="bg-surface-elevated rounded-xl border border-border p-10 text-center mb-6">
+        <div className="text-4xl text-text-muted mb-3">🔄</div>
+        <p className="text-sm text-text-secondary mb-1">{t('automation.noTasks')}</p>
+        <p className="text-xs text-text-muted">{t('automation.cronHint')}</p>
       </div>
+      <h2 className={headCls}>{t('automation.schedule')}</h2>
+      <div className={`${cardCls} mb-6`}>{t('automation.scheduleFuture')}</div>
+      <h2 className={headCls}>{t('automation.executionHistory')}</h2>
+      <div className={cardCls}>{t('automation.noHistory')}</div>
     </div>
   );
 }

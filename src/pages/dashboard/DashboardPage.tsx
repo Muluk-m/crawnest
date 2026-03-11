@@ -10,7 +10,6 @@ async function openDashboardWindow() {
     await existing.setFocus();
     return;
   }
-
   new WebviewWindow("openclaw-dashboard", {
     url: DASHBOARD_URL,
     title: "OpenClaw Dashboard",
@@ -23,55 +22,36 @@ async function openDashboardWindow() {
 export default function DashboardPage() {
   const { state, start, restart } = useGateway();
   const { t } = useTranslation();
-
   const isRunning = state.status === "running";
   const isStarting = state.status === "starting";
 
   return (
-    <div className="flex items-center justify-center h-full">
-      <div className="text-center space-y-4">
-        <div className="text-6xl mb-2">
-          {state.status === "failed" ? "\u26A0\uFE0F" : "\u{1F980}"}
-        </div>
-        <h2 className="text-xl font-semibold text-gray-200">
-          {t('dashboard.gatewayService')}
-        </h2>
-        <p className="text-sm text-gray-400">
+    <div className="flex items-center justify-center h-full animate-fade-in">
+      <div className="text-center space-y-5">
+        <div className="text-7xl mb-1">{state.status === "failed" ? "\u26A0\uFE0F" : "\u{1F980}"}</div>
+        <h2 className="text-xl font-semibold text-text">{t('dashboard.gatewayService')}</h2>
+        <p className="text-sm text-text-muted">
           {isStarting ? t('status.starting') : t(`status.${state.status}`)}
         </p>
 
         {state.last_error && (
-          <div className="max-w-md mx-auto rounded bg-red-950/60 border border-red-800/50 p-3">
-            <p className="text-xs font-semibold text-red-400 uppercase tracking-wide mb-1">
-              {t('dashboard.lastError')}
-            </p>
-            <p className="text-sm text-red-300 font-mono whitespace-pre-wrap break-all">
-              {state.last_error}
-            </p>
+          <div className="max-w-md mx-auto rounded-xl bg-danger-soft border border-danger/20 p-4">
+            <p className="text-[11px] font-semibold text-danger uppercase tracking-wider mb-1">{t('dashboard.lastError')}</p>
+            <p className="text-xs text-danger/80 font-mono break-all">{state.last_error}</p>
           </div>
         )}
 
-        <div className="flex items-center justify-center gap-3 pt-2">
+        <div className="flex items-center justify-center gap-3 pt-1">
           {isRunning ? (
-            <button
-              onClick={openDashboardWindow}
-              className="px-6 py-2 text-sm font-medium rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors"
-            >
+            <button onClick={openDashboardWindow} className="px-6 py-2.5 text-sm font-medium rounded-xl bg-accent hover:bg-accent-hover text-white transition-colors">
               {t('dashboard.openDashboard')}
             </button>
           ) : state.status === "failed" ? (
-            <button
-              onClick={restart}
-              className="px-6 py-2 text-sm font-medium rounded bg-amber-600 hover:bg-amber-500 text-white transition-colors"
-            >
+            <button onClick={restart} className="px-6 py-2.5 text-sm font-medium rounded-xl bg-warning hover:brightness-110 text-white transition-all">
               {t('dashboard.restart')}
             </button>
           ) : (
-            <button
-              onClick={start}
-              disabled={isStarting}
-              className="px-6 py-2 text-sm font-medium rounded bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
+            <button onClick={start} disabled={isStarting} className="px-6 py-2.5 text-sm font-medium rounded-xl bg-success hover:brightness-110 text-white disabled:opacity-50 transition-all">
               {isStarting ? t('status.starting') : t('dashboard.start')}
             </button>
           )}
