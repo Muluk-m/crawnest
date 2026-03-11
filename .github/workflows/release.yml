@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+            node_arch: arm64
+            node_platform: darwin
+            node_suffix: aarch64-apple-darwin
+          - platform: macos-latest
+            args: --target x86_64-apple-darwin
+            node_arch: x64
+            node_platform: darwin
+            node_suffix: x86_64-apple-darwin
+          - platform: windows-latest
+            args: ''
+            node_arch: x64
+            node_platform: win
+            node_suffix: x86_64-pc-windows-msvc
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install openclaw runtime
+        run: npm install --prefix src-tauri/resources/openclaw-runtime
+
+      - name: Download Node.js sidecar binary
+        shell: bash
+        env:
+          NODE_VERSION: '22.16.0'
+        run: |
+          mkdir -p src-tauri/binaries
+          if [ "${{ matrix.node_platform }}" = "win" ]; then
+            curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-win-${{ matrix.node_arch }}.zip" -o node.zip
+            unzip -j node.zip "node-v${NODE_VERSION}-win-${{ matrix.node_arch }}/node.exe" -d src-tauri/binaries/
+            mv src-tauri/binaries/node.exe "src-tauri/binaries/node-${{ matrix.node_suffix }}.exe"
+          else
+            curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${{ matrix.node_platform }}-${{ matrix.node_arch }}.tar.gz" | tar xz --strip-components=2 -C src-tauri/binaries/ "node-v${NODE_VERSION}-${{ matrix.node_platform }}-${{ matrix.node_arch }}/bin/node"
+            mv src-tauri/binaries/node "src-tauri/binaries/node-${{ matrix.node_suffix }}"
+            chmod +x "src-tauri/binaries/node-${{ matrix.node_suffix }}"
+          fi
+
+      - name: Build and release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: ${{ github.ref_name }}
+          releaseBody: 'See the commits for details.'
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
