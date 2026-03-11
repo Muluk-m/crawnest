@@ -37,6 +37,7 @@ const resources = {
         skillsDesc: '管理 MCP 技能和工具',
         automation: '自动化',
         automationDesc: '设置自动化工作流',
+        openDashboard: '打开看板',
       },
       workspace: {
         title: '工作区',
@@ -226,6 +227,7 @@ const resources = {
         skillsDesc: 'Manage MCP skills and tools',
         automation: 'Automation',
         automationDesc: 'Set up automated workflows',
+        openDashboard: 'Open Dashboard',
       },
       workspace: {
         title: 'Workspace',

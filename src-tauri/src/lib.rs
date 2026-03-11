@@ -108,6 +108,45 @@ fn get_user_data_dir(app: &AppHandle) -> Result<std::path::PathBuf, String> {
         .map_err(|e| format!("Failed to get app data dir: {}", e))
 }
 
+/// Ensure openclaw.json has gateway.controlUi.dangerouslyDisableDeviceAuth = true
+/// so the embedded dashboard window works without manual device pairing.
+fn ensure_openclaw_config_auth(user_dir: &std::path::Path) {
+    let config_path = user_dir.join("openclaw.json");
+
+    let mut config: serde_json::Value = if config_path.exists() {
+        std::fs::read_to_string(&config_path)
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_else(|| serde_json::json!({}))
+    } else {
+        serde_json::json!({})
+    };
+
+    // Set gateway.controlUi.dangerouslyDisableDeviceAuth = true
+    let gateway = config
+        .as_object_mut()
+        .unwrap()
+        .entry("gateway")
+        .or_insert_with(|| serde_json::json!({}));
+    let control_ui = gateway
+        .as_object_mut()
+        .unwrap()
+        .entry("controlUi")
+        .or_insert_with(|| serde_json::json!({}));
+
+    if control_ui.get("dangerouslyDisableDeviceAuth") != Some(&serde_json::Value::Bool(true)) {
+        control_ui
+            .as_object_mut()
+            .unwrap()
+            .insert("dangerouslyDisableDeviceAuth".to_string(), serde_json::json!(true));
+
+        if let Some(parent) = config_path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        let _ = std::fs::write(&config_path, serde_json::to_string_pretty(&config).unwrap());
+    }
+}
+
 fn build_clean_env() -> Vec<(String, String)> {
     let mut env: Vec<(String, String)> = Vec::new();
 
@@ -182,6 +221,9 @@ fn start_gateway(app: AppHandle, process: State<'_, GatewayProcess>) -> Result<(
             return Err(e);
         }
     };
+
+    // Ensure openclaw.json has controlUi.dangerouslyDisableDeviceAuth for local desktop use
+    ensure_openclaw_config_auth(&user_dir);
 
     let start_script = scripts_dir.join("start-openclaw.cjs");
     if !start_script.exists() {

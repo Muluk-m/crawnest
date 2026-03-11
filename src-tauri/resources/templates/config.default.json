@@ -13,9 +13,34 @@
     "apiKey": "",
     "baseUrl": ""
   },
+  "tools": {
+    "profile": "full",
+    "web": {
+      "fetch": {
+        "enabled": true
+      }
+    }
+  },
   "feishu": {
     "enabled": false,
     "appId": "",
-    "appSecret": ""
+    "appSecret": "",
+    "groupPolicy": "open",
+    "dmPolicy": "open",
+    "groupSessionScope": "group_topic_sender",
+    "replyMode": {
+      "default": "streaming",
+      "group": "streaming",
+      "direct": "streaming"
+    },
+    "threadSession": true,
+    "streaming": true,
+    "footer": {
+      "elapsed": true,
+      "status": true
+    },
+    "allowFrom": [
+      "*"
+    ]
   }
 }
